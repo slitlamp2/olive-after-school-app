@@ -23,7 +23,6 @@ app/server_err.log
 app/server.log
 hwp_mcp_stdio_server.log
 *.photo.log
-*.log
 
 # 로컬·디버그 산출물
 app/output_check.txt
