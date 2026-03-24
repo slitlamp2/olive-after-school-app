@@ -1,0 +1,5 @@
+---
+description: "HWPX 문서 작업 시 hwpxskill 사용"
+globs: ["*.hwpx"]
+---
+

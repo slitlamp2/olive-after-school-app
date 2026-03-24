@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "hwp-mcp": {
+      "command": "c:\\\\Users\\\\user\\\\Desktop\\\\방과후센터앱\\\\.venv\\\\Scripts\\\\python.exe",
+      "args": [
+        "c:\\\\Users\\\\user\\\\AppData\\\\Roaming\\\\Cursor\\\\mcp-servers\\\\hwp-mcp\\\\hwp_mcp_stdio_server.py"
+      ]
+    }
+  }
+}
+

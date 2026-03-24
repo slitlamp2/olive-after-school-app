@@ -1,0 +1,11 @@
+# 다른 PC에 이미 구버전 앱이 있을 때, 아래 파일만 덮어쓰면
+# 영수증 다장·장별 합계/거래처·사진 슬롯 반영본과 동일해집니다.
+# 한 줄에 프로젝트 루트 기준 상대 경로. # 로 시작하는 줄은 무시.
+
+app/services/openai_service.py
+app/services/hwp_service.py
+app/services/photo_insert_worker.py
+app/routes/purchase_doc.py
+app/templates/purchase_doc.html
+
+CONTEXT.md

@@ -1,0 +1,42 @@
+# 가상환경
+.venv/
+venv/
+
+# 비밀·로컬 설정
+app/.env
+.env
+*.local
+
+# 업로드·생성물
+app/uploads/
+app/outputs/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# 로그
+app/server_err.log
+app/server.log
+hwp_mcp_stdio_server.log
+*.photo.log
+*.log
+
+# 로컬·디버그 산출물
+app/output_check.txt
+app/output_check2.txt
+app/template_content.txt
+app/test_content_utf8.txt
+debug_output.hwp
+debug_photo*_result.hwp
+debug_photo_result.hwp
+desktop.ini
+
+# OS·IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

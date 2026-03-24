@@ -1,0 +1,21 @@
+# app 폴더 전체 소스 + CONTEXT (새 PC에 앱만 복사할 때)
+
+CONTEXT.md
+app/app.py
+app/config.py
+app/requirements.txt
+app/services/__init__.py
+app/services/hwp_service.py
+app/services/openai_service.py
+app/services/photo_insert_worker.py
+app/routes/__init__.py
+app/routes/daily_log.py
+app/routes/plan.py
+app/routes/purchase_doc.py
+app/templates/base.html
+app/templates/index.html
+app/templates/daily_log.html
+app/templates/plan.html
+app/templates/purchase_doc.html
+app/static/css/style.css
+app/static/js/app.js

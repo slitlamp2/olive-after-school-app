@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+  <a href="/" class="back-btn">← 메인으로</a>
+  <h1>📝 계획서 생성</h1>
+  <p>품위서 내용과 사진을 이용해 목적·목표·프로그램내용·기대효과를 자동으로 작성합니다.</p>
+</div>
+
+<form id="plan-form" class="form-card">
+  <!-- 계획일자 -->
+  <div class="form-section">
+    <h3>기본 정보</h3>
+    <div class="form-group">
+      <label for="plan_date">계획 일자 <span class="required">*</span></label>
+      <input type="date" id="plan_date" name="plan_date" required>
+    </div>
+  </div>
+
+  <!-- 품위서 내용 -->
+  <div class="form-section">
+    <h3>품위서 내용</h3>
+    <div class="source-toggle">
+      <label>
+        <input type="radio" name="purchase_source" value="auto" checked> 품위서에서 자동 불러오기
+      </label>
+      <label>
+        <input type="radio" name="purchase_source" value="manual"> 직접 입력
+      </label>
+    </div>
+    <div class="form-group">
+      <textarea id="purchase_summary" name="purchase_summary" rows="5"
+                placeholder="품목 내역을 입력하세요 (예: 색연필 세트 2개, 스케치북 5권 등)">{{ purchase_summary }}</textarea>
+    </div>
+  </div>
+
+  <!-- 사진 업로드 (버튼 6개) -->
+  <div class="form-section">
+    <h3>활동 사진 <small>(최대 6장)</small></h3>
+    <div class="upload-buttons upload-buttons-6" style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+      <div class="upload-btn-wrap">
+        <input type="file" id="plan-photo1" name="photos" accept="image/*" style="display:none;">
+        <button type="button" class="upload-btn" data-for="plan-photo1"><span class="upload-btn-icon">📷</span><span>사진1</span></button>
+        <div class="upload-btn-preview" id="plan-preview1"></div>
+      </div>
+      <div class="upload-btn-wrap">
+        <input type="file" id="plan-photo2" name="photos" accept="image/*" style="display:none;">
+        <button type="button" class="upload-btn" data-for="plan-photo2"><span class="upload-btn-icon">📷</span><span>사진2</span></button>
+        <div class="upload-btn-preview" id="plan-preview2"></div>
+      </div>
+      <div class="upload-btn-wrap">
+        <input type="file" id="plan-photo3" name="photos" accept="image/*" style="display:none;">
+        <button type="button" class="upload-btn" data-for="plan-photo3"><span class="upload-btn-icon">📷</span><span>사진3</span></button>
+        <div class="upload-btn-preview" id="plan-preview3"></div>
+      </div>
+      <div class="upload-btn-wrap">
+        <input type="file" id="plan-photo4" name="photos" accept="image/*" style="display:none;">
+        <button type="button" class="upload-btn" data-for="plan-photo4"><span class="upload-btn-icon">📷</span><span>사진4</span></button>
+        <div class="upload-btn-preview" id="plan-preview4"></div>
+      </div>
+      <div class="upload-btn-wrap">
+        <input type="file" id="plan-photo5" name="photos" accept="image/*" style="display:none;">
+        <button type="button" class="upload-btn" data-for="plan-photo5"><span class="upload-btn-icon">📷</span><span>사진5</span></button>
+        <div class="upload-btn-preview" id="plan-preview5"></div>
+      </div>
+      <div class="upload-btn-wrap">
+        <input type="file" id="plan-photo6" name="photos" accept="image/*" style="display:none;">
+        <button type="button" class="upload-btn" data-for="plan-photo6"><span class="upload-btn-icon">📷</span><span>사진6</span></button>
+        <div class="upload-btn-preview" id="plan-preview6"></div>
+      </div>
+    </div>
+  </div>
+
+  <button type="submit" class="btn-primary btn-large">
+    🤖 계획서 자동 생성
+  </button>
+</form>
+
+<!-- 결과 -->
+<div id="result-section" class="result-card hidden">
+  <h3>✅ 생성 완료</h3>
+  <div id="demo-notice" class="demo-badge hidden">⚠️ 데모 모드 – OpenAI API 키 미설정</div>
+
+  <div class="result-block">
+    <h4>목적 및 목표</h4>
+    <pre id="purpose"></pre>
+    <pre id="goal"></pre>
+  </div>
+  <div class="result-block">
+    <h4>프로그램 내용</h4>
+    <pre id="program-content"></pre>
+  </div>
+  <div class="result-block">
+    <h4>기대 효과</h4>
+    <pre id="expected-effect"></pre>
+  </div>
+
+  <div class="result-meta">
+    <span>💾 저장 위치:</span>
+    <code id="output-path"></code>
+  </div>
+  <div style="margin-top:12px;">
+    <button id="btn-open-file" class="btn-open-file" onclick="openOutputFile()">
+      📂 파일 열기 (한글)
+    </button>
+    <a id="btn-download-file" class="btn-open-file" href="#" style="margin-left:8px;">
+      ⬇ 파일 다운로드
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  setupPhotoButtons(
+    ['plan-photo1','plan-photo2','plan-photo3','plan-photo4','plan-photo5','plan-photo6'],
+    ['plan-preview1','plan-preview2','plan-preview3','plan-preview4','plan-preview5','plan-preview6']
+  );
+
+  // 날짜 기본값
+  document.getElementById('plan_date').valueAsDate = new Date();
+
+  // 품위서 소스 토글
+  document.querySelectorAll('input[name="purchase_source"]').forEach(function(r) {
+    r.addEventListener('change', function() {
+      const ta = document.getElementById('purchase_summary');
+      ta.readOnly = (this.value === 'auto');
+    });
+  });
+  // 초기 상태: auto이면 읽기 전용
+  document.getElementById('purchase_summary').readOnly =
+    document.querySelector('input[name="purchase_source"]:checked').value === 'auto';
+
+  setupFormSubmit('plan-form', '/plan/generate', function(data) {
+    const pc = data.plan_content;
+    document.getElementById('purpose').textContent = pc.purpose || '';
+    document.getElementById('goal').textContent = pc.goal || '';
+    document.getElementById('program-content').textContent = pc.program_content || '';
+    document.getElementById('expected-effect').textContent = pc.expected_effect || '';
+    document.getElementById('output-path').textContent = data.output_path;
+    document.getElementById('btn-open-file').dataset.path = data.output_path;
+    document.getElementById('btn-download-file').href =
+      '/download?path=' + encodeURIComponent(data.output_path);
+    if (data.is_demo) document.getElementById('demo-notice').classList.remove('hidden');
+    document.getElementById('result-section').classList.remove('hidden');
+    document.getElementById('result-section').scrollIntoView({behavior:'smooth'});
+  });
+
+  function openOutputFile() {
+    const path = document.getElementById('btn-open-file').dataset.path;
+    if (!path) return;
+    fetch('/open-file', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({path})})
+    .then(r => r.json()).then(d => { if (!d.success) alert('파일 열기 실패: ' + d.error); });
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-header">
+  <a href="/" class="back-btn">← 메인으로</a>
+  <h1>🧾 품위서 생성</h1>
+  <p>영수증 사진을 올리면 품위서가 자동으로 작성됩니다. <strong>최대 3장</strong>까지 넣을 수 있고, <strong>1장 이상</strong> 필수입니다.</p>
+</div>
+
+<form id="purchase-form" class="form-card">
+  <div class="form-section">
+    <h3>영수증 사진 <span class="required">*</span> <small>(1~3장)</small></h3>
+    <div class="photo-cards">
+
+      <div class="photo-card">
+        <div class="photo-card-header">🧾 영수증 1</div>
+        <div class="upload-btn-wrap photo-upload-area">
+          <input type="file" id="receipt1" name="receipt1" accept="image/*" style="display:none;">
+          <button type="button" class="upload-btn" data-for="receipt1">
+            <span class="upload-btn-icon">🧾</span><span>영수증 선택</span>
+          </button>
+          <div class="upload-btn-preview" id="receipt-preview-1"></div>
+        </div>
+      </div>
+
+      <div class="photo-card">
+        <div class="photo-card-header">🧾 영수증 2 <small>(선택)</small></div>
+        <div class="upload-btn-wrap photo-upload-area">
+          <input type="file" id="receipt2" name="receipt2" accept="image/*" style="display:none;">
+          <button type="button" class="upload-btn" data-for="receipt2">
+            <span class="upload-btn-icon">🧾</span><span>영수증 선택</span>
+          </button>
+          <div class="upload-btn-preview" id="receipt-preview-2"></div>
+        </div>
+      </div>
+
+      <div class="photo-card">
+        <div class="photo-card-header">🧾 영수증 3 <small>(선택)</small></div>
+        <div class="upload-btn-wrap photo-upload-area">
+          <input type="file" id="receipt3" name="receipt3" accept="image/*" style="display:none;">
+          <button type="button" class="upload-btn" data-for="receipt3">
+            <span class="upload-btn-icon">🧾</span><span>영수증 선택</span>
+          </button>
+          <div class="upload-btn-preview" id="receipt-preview-3"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <button type="submit" class="btn-primary btn-large">
+    🤖 품위서 자동 생성
+  </button>
+</form>
+
+<!-- 결과 -->
+<div id="result-section" class="result-card hidden">
+  <h3>✅ 생성 완료</h3>
+  <div id="demo-notice" class="demo-badge hidden">⚠️ 데모 모드 – OpenAI API 키 미설정</div>
+
+  <div class="result-block">
+    <h4>추출된 정보</h4>
+    <table class="data-table" id="items-table">
+      <thead>
+        <tr><th>품명</th><th>수량</th><th>단위</th><th>단가</th><th>금액</th><th>비고</th></tr>
+      </thead>
+      <tbody id="items-body"></tbody>
+    </table>
+    <div class="total-row">
+      <strong>합계:</strong> <span id="total-amount"></span>원
+      &nbsp;|&nbsp; <strong>매장:</strong> <span id="store-name"></span>
+      &nbsp;|&nbsp; <strong>날짜:</strong> <span id="purchase-date"></span>
+    </div>
+  </div>
+
+  <div class="result-meta">
+    <span>💾 저장 위치:</span>
+    <code id="output-path"></code>
+  </div>
+  <div style="margin-top:12px;">
+    <button id="btn-open-file" class="btn-open-file" onclick="openOutputFile()">
+      📂 파일 열기 (한글)
+    </button>
+    <a id="btn-download-file" class="btn-open-file" href="#" style="margin-left:8px;">
+      ⬇ 파일 다운로드
+    </a>
+  </div>
+
+  <!-- 계획서 이동 -->
+  <div class="next-action">
+    <p>계획서를 이어서 생성하시겠습니까?</p>
+    <a id="go-plan-btn" href="/plan" class="btn-secondary">📝 계획서 생성하기</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  setupPhotoButtons(
+    ['receipt1', 'receipt2', 'receipt3'],
+    ['receipt-preview-1', 'receipt-preview-2', 'receipt-preview-3']
+  );
+  setupFormSubmit('purchase-form', '/purchase-doc/generate', function(data) {
+    const rd = data.receipt_data;
+    document.getElementById('store-name').textContent = rd.store_name || '';
+    document.getElementById('purchase-date').textContent = rd.purchase_date || '';
+    document.getElementById('total-amount').textContent = rd.total_amount || '';
+
+    const tbody = document.getElementById('items-body');
+    tbody.innerHTML = '';
+    (rd.items || []).forEach(function(item) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${item.name}</td><td>${item.qty}</td><td>${item.unit}</td>` +
+                     `<td>${item.unit_price}</td><td>${item.amount}</td><td>${item.note||''}</td>`;
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById('output-path').textContent = data.output_path;
+    document.getElementById('btn-open-file').dataset.path = data.output_path;
+    document.getElementById('btn-download-file').href =
+      '/download?path=' + encodeURIComponent(data.output_path);
+    if (data.is_demo) document.getElementById('demo-notice').classList.remove('hidden');
+    document.getElementById('result-section').classList.remove('hidden');
+    document.getElementById('result-section').scrollIntoView({behavior:'smooth'});
+  });
+
+  function openOutputFile() {
+    const path = document.getElementById('btn-open-file').dataset.path;
+    if (!path) return;
+    fetch('/open-file', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({path})})
+    .then(r => r.json()).then(d => { if (!d.success) alert('파일 열기 실패: ' + d.error); });
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,13 @@
+---
+description: OpenAI 이미지 분석 및 HWP 문서 생성 연동 규칙
+alwaysApply: false
+globs: "**/*.{ts,tsx,js,jsx,py}"
+---
+
+# OpenAI + HWP 연동
+
+- **일일활동일지**: 사진 3~4장 → OpenAI Vision으로 활동 설명 생성 → 서식에 맞춰 HWP 일지 작성 → **최종 저장은 .hwp 파일**.
+- **품위서**: 영수증 사진 → OpenAI(이미지/OCR)로 품목·금액 등 추출 → 품위서 서식 HWP 생성 → **최종 저장은 .hwp 파일**.
+- **계획서**: 품위서 텍스트 + 활동 사진 → OpenAI로 목적·목표·진행내용 생성 → 구간별 계획서 HWP 생성 → **최종 저장은 .hwp 파일**.
+- **HWP 작업**: 문서 생성·저장·템플릿 채우기는 HWP MCP 도구 사용(hwp_create, hwp_open, hwp_replace_text, hwp_fill_cells, hwp_save 등). 템플릿 활용 시 `한글_템플릿_내용만_바꾸기.md` 참고.
+- **API 키**: OpenAI 키는 환경 변수 또는 설정 파일에서 읽고, 코드에 하드코딩하지 않는다.

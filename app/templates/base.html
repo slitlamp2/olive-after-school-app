@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>올리브청소년방과후 센터 활동앱</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2">
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-inner">
+      <a href="/" class="logo-link">
+        <span class="logo-icon">🌿</span>
+        <span class="logo-text">올리브청소년방과후 센터 활동앱</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="app-footer">
+    <p>올리브청소년방과후 센터 &copy; 2026</p>
+  </footer>
+
+  <div id="toast" class="toast hidden"></div>
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div class="spinner"></div>
+    <p id="loading-msg">처리 중입니다…</p>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
