@@ -43,9 +43,10 @@ def generate_daily_log():
         photo_metas = []
         for i in range(1, 4):
             photo_metas.append({
-                'time':  request.form.get(f'photo_time_{i}', '').strip(),
-                'place': request.form.get(f'photo_place_{i}', '').strip(),
-                'note':  request.form.get(f'photo_note_{i}', '').strip(),
+                'time':    request.form.get(f'photo_time_{i}', '').strip(),
+                'program': request.form.get(f'photo_program_{i}', '').strip(),
+                'place':   request.form.get(f'photo_place_{i}', '').strip(),
+                'note':    request.form.get(f'photo_note_{i}', '').strip(),
             })
 
         # 사진 저장
@@ -83,6 +84,7 @@ def generate_daily_log():
             'special_note':     '\n'.join(m['note']  for m in photo_metas if m['note']),
             'activity_content': activities.get('full_text', ''),
             'activities':       activities,
+            'photo_metas':      photo_metas,
             'photo_paths':      saved_paths,
         }
         output_path = hwp_service.create_daily_log(data, current_app.config['OUTPUT_FOLDER'])

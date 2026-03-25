@@ -20,7 +20,7 @@ import pythoncom
 import win32clipboard
 import win32con
 import win32gui
-from PIL import Image
+from PIL import Image, ImageOps
 
 
 def _resolve_hwp_mcp_path() -> str:
@@ -102,12 +102,27 @@ def _send_ctrl_v():
     time.sleep(0.5)
 
 
+def _orient_image_for_display(img: Image.Image) -> Image.Image:
+    """
+    EXIF Orientation(휴대폰 세로/가로 촬영 메타데이터)을 픽셀에 반영합니다.
+    붙여넣기 전에 적용해 사람·장면이 통상적인 '위' 방향으로 보이게 합니다.
+    EXIF가 없거나 이미 반영된 파일은 그대로 둡니다.
+    """
+    try:
+        return ImageOps.exif_transpose(img)
+    except Exception:
+        return img
+
+
 def _prepare_image(image_path: str, index: int, target_w: int = 980, target_h: int = 680) -> str:
     """
     셀 크기에 맞게 이미지를 미리 축소합니다.
     비율을 유지한 채 흰 배경 캔버스에 맞춰 넣습니다. 원본 색상 유지.
+    삽입 전 EXIF 방향을 보정합니다.
     """
-    img = Image.open(image_path).convert("RGB")
+    img = Image.open(image_path)
+    img = _orient_image_for_display(img)
+    img = img.convert("RGB")
     img.thumbnail((target_w, target_h))
 
     canvas = Image.new("RGB", (target_w, target_h), (255, 255, 255))
@@ -152,7 +167,7 @@ def _clear_current_cell(ctrl):
 
 
 def _insert_daily_log_photos(ctrl, hwnd, photo_paths: list):
-    """일일활동일지: 사진1입력, 사진2입력 placeholder"""
+    """일일활동일지: 사진1입력, 사진2입력 자리에 사진 붙이기(문구는 제거)."""
     if len(photo_paths) == 1:
         chosen = [photo_paths[0], photo_paths[0]]
     else:
@@ -160,14 +175,38 @@ def _insert_daily_log_photos(ctrl, hwnd, photo_paths: list):
 
     prepared = [_prepare_image(p, i + 1) for i, p in enumerate(chosen)]
 
-    for placeholder, prep, name in [("사진1입력", prepared[0], "왼쪽"), ("사진2입력", prepared[1], "오른쪽")]:
+    # AllReplace는 문서 전체 치환이라, 찾기→붙여넣기 위치를 잡기 어렵습니다.
+    # 플레이스홀더를 문서에 거의 없을 앵커 문자열로 바꾼 뒤 해당 셀만 비우고 이미지를 넣습니다.
+    slot_markers = (
+        ("사진1입력", "@@OLIVE_DAILY_PHOTO_1@@", prepared[0], "왼쪽"),
+        ("사진2입력", "@@OLIVE_DAILY_PHOTO_2@@", prepared[1], "오른쪽"),
+    )
+    for placeholder, marker, prep, name in slot_markers:
+        try:
+            ctrl.replace_text(placeholder, marker, replace_all=True)
+        except Exception as e:
+            _log(f"'{placeholder}' → 앵커 치환 실패: {e}")
+
+    for placeholder, marker, prep, name in slot_markers:
         ctrl.hwp.HAction.Run("MoveDocBegin")
-        if not ctrl.find_text(placeholder):
-            _log(f"placeholder '{placeholder}' 을 찾지 못했습니다.")
+        if not ctrl.find_text(marker):
+            _log(f"앵커 '{marker}' 를 찾지 못했습니다. 양식에 '{placeholder}' 문구가 있는지 확인하세요.")
             continue
         _clear_current_cell(ctrl)
         _paste_photo(hwnd, prep)
-        _log(f"{name} 셀 삽입 완료")
+        # 붙여넣기 후에도 같은 셀 아래 줄 등에 앵커 문자열이 남는 경우가 있어 전부 삭제
+        try:
+            ctrl.replace_text(marker, "", replace_all=True)
+        except Exception as e:
+            _log(f"앵커 문구 제거 실패 ({marker}): {e}")
+        _log(f"{name} 셀 삽입 완료(플레이스홀더·앵커 제거)")
+
+    # 남은 앵커가 있으면 최종 정리(한 번 더)
+    for _, marker, _, _ in slot_markers:
+        try:
+            ctrl.replace_text(marker, "", replace_all=True)
+        except Exception:
+            pass
 
 
 def _insert_purchase_doc_photos(ctrl, hwnd, photo_paths: list):

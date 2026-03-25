@@ -278,7 +278,8 @@ def _fill_korean_parenthesized_date(ctrl, raw_date: str):
 
 def _fill_purchase_placeholder_cell(ctrl, placeholder: str, value: str):
     """
-    품위서 양식의 플레이스홀더 문자열(예: 영수증1합계)을 값으로 바꿉니다.
+    템플릿에 그대로 박혀 있는 플레이스홀더 문자열을 값으로 바꿉니다.
+    (품위서: 영수증1합계 등 / 일일활동일지: 시간1·활동1 등)
     값이 비어 있으면 해당 문구만 제거합니다.
     """
     if not placeholder:
@@ -386,26 +387,45 @@ def _build_activity_text(acts: dict) -> str:
     return "\n\n".join(parts)
 
 
+def _fill_daily_log_time_activity_slots(ctrl, photo_metas: list):
+    """
+    사진 순서에 맞춰 템플릿의 시간1~3, 활동1~3을 채웁니다.
+    - 사진 i의 활동 시간 → 시간i
+    - 사진 i의 프로그램 내용 → 활동i
+    업로드 장수보다 큰 슬롯은 빈 문자열로 치환(플레이스홀더 제거).
+    """
+    metas = photo_metas or []
+    for i in range(1, 4):
+        meta = metas[i - 1] if i - 1 < len(metas) else None
+        t = (meta.get("time") or "").strip() if meta else ""
+        p = (meta.get("program") or "").strip() if meta else ""
+        _fill_purchase_placeholder_cell(ctrl, f"시간{i}", t)
+        _fill_purchase_placeholder_cell(ctrl, f"활동{i}", p)
+
+
 def create_daily_log(data: dict, output_dir: str) -> str:
     """
     일일활동일지 HWP를 생성합니다.
 
     data keys:
-        date (str), time (str), place (str), special_note (str),
+        date (str), time (str, 선택), place (str), special_note (str),
+                     ← 라우트 호환용이며, 월별 이용시간·일시 헤더에는 사용하지 않음
         activity_content (str)   ← 브라우저 표시용 전체 텍스트
         activities (dict)        ← 시간대별 구조화 데이터
+        photo_metas (list)       ← 사진별 시간·프로그램 내용·장소·특이사항 (시간i·활동i 치환)
         photo_paths (list)       ← 업로드된 사진 경로 목록
     """
     from config import Config
     template = Config.DAILY_LOG_TEMPLATE
     output_path = _make_output_path("일일활동일지", output_dir)
 
-    acts          = data.get("activities", {})
-    date_str      = data.get("date", "")
-    time_str      = data.get("time", "")
-    datetime_str  = f"{date_str}  {time_str}".strip()
-    student_names = data.get("student_names", "").strip()
-    photo_paths   = data.get("photo_paths", [])
+    acts            = data.get("activities", {})
+    date_str        = data.get("date", "").strip()
+    header_time_str = ""
+    datetime_str    = date_str
+    student_names   = data.get("student_names", "").strip()
+    photo_paths     = data.get("photo_paths", [])
+    photo_metas     = data.get("photo_metas") or []
 
     # 전체 활동 내용을 하나의 블록으로 합치기
     full_activity = _build_activity_text(acts)
@@ -421,9 +441,13 @@ def create_daily_log(data: dict, output_dir: str) -> str:
             except Exception:
                 pass
 
+            # 월별 이용시간·일시 헤더에는 사진별 활동 시간을 넣지 않습니다.
+            # 사진별 활동 시간·프로그램 내용은 양식의 시간1~3, 활동1~3 플레이스홀더에만 넣습니다.
+            _fill_daily_log_time_activity_slots(ctrl, photo_metas)
+
             # ── 헤더 정보 채우기: 일시, 이용시간, 이용자(활동명단) ──
             _fill_label(ctrl, "일시", datetime_str)
-            _fill_label(ctrl, "이용시간", time_str)
+            _fill_label(ctrl, "이용시간", header_time_str)
             _fill_label(ctrl, "이용자", student_names)
 
             # ── 프로그램 참여 내용 셀에 전체 활동 내역 삽입 ──

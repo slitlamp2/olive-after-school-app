@@ -210,7 +210,7 @@ def generate_activity_content(image_paths: list, photo_metas: list,
                                api_key: str, student_names: str = '') -> dict:
     """
     사진 3장 + 사진별 메타데이터를 바탕으로 시간대별 프로그램 참여 내용을 생성합니다.
-    photo_metas: [{'time':..., 'place':..., 'note':...}, ...]  사진 순서에 맞게
+    photo_metas: [{'time':..., 'program':..., 'place':..., 'note':...}, ...]  사진 순서에 맞게
 
     Returns dict:
         {
@@ -231,6 +231,7 @@ def generate_activity_content(image_paths: list, photo_metas: list,
     for i, meta in enumerate(photo_metas, 1):
         parts = [f"[사진 {i}]"]
         if meta.get('time'):  parts.append(f"활동시간: {meta['time']}")
+        if meta.get('program'): parts.append(f"프로그램내용(직접입력): {meta['program']}")
         if meta.get('place'): parts.append(f"활동장소: {meta['place']}")
         if meta.get('note'):  parts.append(f"특이사항: {meta['note']}")
         photo_ctx_lines.append("  ".join(parts))
@@ -248,6 +249,8 @@ def generate_activity_content(image_paths: list, photo_metas: list,
         f"{photo_ctx}\n\n"
         "사진에 보이는 아동들의 모습·표정·동작·사용 교구·재료·상호작용을 분석하여 "
         "아래 JSON 형식으로 작성해 주세요.\n\n"
+        "- 각 사진에 '프로그램내용(직접입력)'이 있으면 해당 사진의 시간대·장면과 맞게 참여 서술에 반드시 반영하고, "
+        "없으면 사진만으로 판단하세요.\n"
         "【문체 기준 – 매우 중요】\n"
         "- 사회복지사가 관찰 내용을 보고서에 작성하듯 기술합니다.\n"
         "- 문장 끝은 반드시 '~했음', '~하였음', '~보였음', '~전해 드렸음', '~제공하였음' 등 보고서 종결어미로만 마무리합니다.\n"
