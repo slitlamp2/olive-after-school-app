@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>올리브청소년방과후 센터 활동앱</title>
+  <style>
+    body { font-family: 'Malgun Gothic', sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1.2rem; line-height: 1.65; color: #2d2d2d; }
+    h1 { font-size: 1.35rem; color: #3e5a18; }
+    a { color: #5c7a29; }
+    pre { background: #f2f5ec; padding: 12px 14px; border-radius: 8px; overflow-x: auto; font-size: 0.88rem; }
+    .note { background: #fff8e1; border: 1px solid #f9a825; padding: 12px 14px; border-radius: 8px; margin: 1rem 0; font-size: 0.92rem; }
+  </style>
+</head>
+<body>
+  <h1>올리브청소년방과후 센터 활동앱</h1>
+
+  <div class="note">
+    <strong>GitHub Pages 한계:</strong> 이 주소는 정적 웹페이지만 보여 줄 수 있습니다.
+    본 앱은 <strong>Flask(Python) 서버</strong>가 필요하므로, 여기서는 실제 활동앱 화면이 열리지 않습니다.
+  </div>
+
+  <p>
+    소스 코드와 설치 방법은
+    <a href="https://github.com/slitlamp2/olive-after-school-app">GitHub 저장소</a>를 참고하세요.
+  </p>
+
+  <h2>PC에서 실행 (요약)</h2>
+  <pre>git clone https://github.com/slitlamp2/olive-after-school-app.git
+cd olive-after-school-app
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r app/requirements.txt
+# app/.env 에 OPENAI_API_KEY 등 설정
+cd app
+python app.py</pre>
+  <p>브라우저에서 <code>http://localhost:5006</code> 로 접속합니다.</p>
+</body>
+</html>
