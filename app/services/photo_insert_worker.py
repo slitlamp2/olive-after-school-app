@@ -210,9 +210,10 @@ def _insert_daily_log_photos(ctrl, hwnd, photo_paths: list):
 
 
 def _insert_purchase_doc_photos(ctrl, hwnd, photo_paths: list):
-    """품위서: 양식의 플레이스홀더 셀에 영수증 이미지를 붙여넣습니다.
+    """품의서: 양식의 플레이스홀더 셀에 영수증 이미지를 붙여넣습니다.
 
     - 신규(슬롯별 후보 순서대로 시도): 영수증1사진 / 영수증2사진(또는 영수증사진2) / 영수증3사진
+    - 플레이스홀더 문구는 붙여넣기 후 제거(일일활동일지 사진 슬롯과 동일한 앵커 방식)
     - 구형: '영수증사진' 아래 영역 또는 '영수증입력' 등 (1장만)
     """
     # 양식마다 2번 슬롯 문자열이 '영수증2사진' 또는 '영수증사진2'로 다를 수 있음
@@ -221,25 +222,39 @@ def _insert_purchase_doc_photos(ctrl, hwnd, photo_paths: list):
         ("영수증2사진", "영수증사진2"),
         ("영수증3사진", "영수증사진3"),
     )
+    n = len(photo_paths)
     placed_count = 0
-    for idx, candidates in enumerate(slot_label_groups):
-        if idx >= len(photo_paths):
-            break
-        path = photo_paths[idx]
-        found = None
-        for label in candidates:
-            ctrl.hwp.HAction.Run("MoveDocBegin")
-            if ctrl.find_text(label):
-                found = label
-                break
-        if not found:
-            _log(f"placeholder 후보 {candidates} 를 찾지 못했습니다.")
+
+    # 업로드 장수만큼 슬롯 문구를 앵커로 바꾼 뒤 셀 비우기·붙여넣기·앵커 제거
+    for idx in range(n):
+        marker = f"@@OLIVE_PURCHASE_PHOTO_{idx + 1}@@"
+        for label in slot_label_groups[idx]:
+            try:
+                ctrl.replace_text(label, marker, replace_all=True)
+            except Exception as e:
+                _log(f"'{label}' → 앵커 치환 실패: {e}")
+
+    for idx, path in enumerate(photo_paths):
+        marker = f"@@OLIVE_PURCHASE_PHOTO_{idx + 1}@@"
+        ctrl.hwp.HAction.Run("MoveDocBegin")
+        if not ctrl.find_text(marker):
+            _log(f"앵커 '{marker}' 를 찾지 못했습니다. 슬롯 {idx + 1} placeholder 확인.")
             continue
         prepared = _prepare_image(path, idx + 1, target_w=980, target_h=1200)
         _clear_current_cell(ctrl)
         _paste_photo(hwnd, prepared)
+        try:
+            ctrl.replace_text(marker, "", replace_all=True)
+        except Exception as e:
+            _log(f"앵커 제거 실패 ({marker}): {e}")
         placed_count += 1
-        _log(f"'{found}' 삽입 완료: {os.path.basename(path)}")
+        _log(f"영수증 {idx + 1} 삽입 완료(플레이스홀더·앵커 제거): {os.path.basename(path)}")
+
+    for i in range(1, n + 1):
+        try:
+            ctrl.replace_text(f"@@OLIVE_PURCHASE_PHOTO_{i}@@", "", replace_all=True)
+        except Exception:
+            pass
 
     if placed_count == len(photo_paths):
         return
@@ -283,7 +298,7 @@ def _insert_purchase_doc_photos(ctrl, hwnd, photo_paths: list):
 
     _log(
         "영수증 사진 placeholder를 찾지 못했습니다. "
-        "품위서양식.hwp에 '영수증1사진', '영수증2사진', '영수증3사진' 또는 '영수증사진'·'영수증입력'이 있는지 확인해 주세요."
+        "품의서양식.hwp에 '영수증1사진', '영수증2사진', '영수증3사진' 또는 '영수증사진'·'영수증입력'이 있는지 확인해 주세요."
     )
 
 
@@ -359,10 +374,14 @@ def insert_photos(doc_type: str, output_path: str, photo_paths: list):
     finally:
         try:
             if ctrl:
+                try:
+                    ctrl.hwp.SetMessageBoxMode(0x00020000)
+                except Exception:
+                    pass
                 ctrl.close_document(save=False, suppress_dialog=True)
                 ctrl.close_all_documents(save=False, suppress_dialog=True)
                 try:
-                    ctrl.hwp.SetMessageBoxMode(0x00100000)
+                    ctrl.hwp.SetMessageBoxMode(0x00020000)
                     try:
                         ctrl.hwp.Quit()
                         _log("한글 종료(Quit) 실행")
@@ -375,7 +394,7 @@ def insert_photos(doc_type: str, output_path: str, photo_paths: list):
                             _log("한글 종료(HAction FileExit) 실행")
                 except Exception as ex:
                     _log(f"한글 종료 시도 실패: {ex}")
-            time.sleep(0.2)
+            time.sleep(0.5)
         except Exception:
             pass
         try:

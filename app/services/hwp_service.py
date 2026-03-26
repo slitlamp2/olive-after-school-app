@@ -108,11 +108,12 @@ def _controller_session():
             except Exception:
                 pass
             try:
+                ctrl.hwp.SetMessageBoxMode(0x00020000)
                 ctrl.close_all_documents(save=False, suppress_dialog=True)
             except Exception:
                 pass
             try:
-                ctrl.hwp.SetMessageBoxMode(0x00100000)
+                ctrl.hwp.SetMessageBoxMode(0x00020000)
                 try:
                     ctrl.hwp.Quit()
                     print("[hwp_service] 한글 종료(Quit) 실행")
@@ -126,7 +127,7 @@ def _controller_session():
             except Exception as e:
                 print(f"[hwp_service] 한글 종료 시도 실패: {e}")
             try:
-                time.sleep(0.2)
+                time.sleep(1.0)
             except Exception:
                 pass
             try:
@@ -162,6 +163,9 @@ def _spawn_photo_worker(doc_type: str, output_path: str, photo_paths: list):
 
     n = 6 if doc_type == "plan" else 2 if doc_type == "daily_log" else 3
     to_use = valid[:n]
+
+    time.sleep(1.5)
+
     log_path = get_photo_insert_log_path(output_path)
     try:
         with open(log_path, "w", encoding="utf-8") as log_fp:
